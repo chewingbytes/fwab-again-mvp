@@ -9,7 +9,14 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 import { toast } from "sonner";
+
 import { useState, useEffect } from "react";
+import {
+  getEvents,
+  addEvent as addEventLocal,
+  updateEvent as updateEventLocal,
+  deleteEvent as deleteEventLocal,
+} from "@/lib/localData";
 import {
   Dialog,
   DialogContent,
@@ -52,12 +59,11 @@ export default function EventsDashboard() {
     participantsLimit: 0,
   });
 
-  async function fetchData() {
+  function fetchData() {
     try {
-      const response = await fetch("http://localhost:5050/api/events");
-      if (!response.ok) throw new Error(`Error: ${response.statusText}`);
-      const eventData = await response.json();
+      const eventData = getEvents();
       setEvents(eventData);
+      setError(null);
     } catch (err) {
       setError((err as Error).message);
       console.error("Error fetching events:", err);
@@ -75,49 +81,29 @@ export default function EventsDashboard() {
     setDialogOpen(true);
   }
 
-  async function fetchUserRole() {
-    try {
-      const response = await fetch(
-        "http://localhost:5050/api/users/user-auth",
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to fetch user data: ${errorText}`);
-      }
-
-      const data = await response.json();
-      const userRole = data.user.roles;
-      setUserRole(userRole);
-      console.log("userRole:", userRole);
-
-      if (userRole === "admin") {
-        const editColumn = {
-          accessorKey: "edit",
-          header: "Actions",
-          cell: ({ row }: any) => (
-            <Button
-              className="rounded"
-              onClick={() => handleEditClick(row.original)}
-            >
-              Edit
-            </Button>
-          ),
-        };
-
-        setColumns([...baseColumns, editColumn]);
-      }
-    } catch (error) {
-      console.error(error);
+  function fetchUserRole() {
+    // For demo, just set admin if any event exists
+    const eventData = getEvents();
+    const role = eventData.length > 0 ? "admin" : "user";
+    setUserRole(role);
+    if (role === "admin") {
+      const editColumn = {
+        accessorKey: "edit",
+        header: "Actions",
+        cell: ({ row }: any) => (
+          <Button
+            className="rounded"
+            onClick={() => handleEditClick(row.original)}
+          >
+            Edit
+          </Button>
+        ),
+      };
+      setColumns([...baseColumns, editColumn]);
     }
   }
 
-  async function handleAddEvent() {
+  function handleAddEvent() {
     if (
       !newEvent.eventName.trim() ||
       !newEvent.eventDate.trim() ||
@@ -127,20 +113,11 @@ export default function EventsDashboard() {
       !newEvent.description.trim() ||
       newEvent.participantsLimit <= 0
     ) {
-      toast.error(
-        "All fields are required."
-      );
+      toast.error("All fields are required.");
       return;
     }
     try {
-      const response = await fetch("http://localhost:5050/api/events", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newEvent),
-      });
-
-      if (!response.ok) throw new Error("Failed to add event");
-
+      addEventLocal(newEvent);
       toast.success("New event added");
       setAddDialogOpen(false);
       setNewEvent({
@@ -159,7 +136,7 @@ export default function EventsDashboard() {
     }
   }
 
-  async function handleSaveChanges(eventName: any) {
+  function handleSaveChanges(eventName: any) {
     if (!selectedEvent) return;
     if (
       !selectedEvent.eventName.trim() ||
@@ -174,62 +151,40 @@ export default function EventsDashboard() {
       return;
     }
     try {
-      const response = await fetch(
-        `http://localhost:5050/api/events/update/${eventName}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            eventName: selectedEvent.eventName,
-            eventDate: selectedEvent.eventDate,
-            startTime: selectedEvent.startTime,
-            endTime: selectedEvent.endTime,
-            location: selectedEvent.location,
-            description: selectedEvent.description,
-            participantsLimit: selectedEvent.participantsLimit,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to edit user: ${errorText}`);
+      const updated = updateEventLocal(eventName, {
+        eventName: selectedEvent.eventName,
+        eventDate: selectedEvent.eventDate,
+        startTime: selectedEvent.startTime,
+        endTime: selectedEvent.endTime,
+        location: selectedEvent.location,
+        description: selectedEvent.description,
+        participantsLimit: selectedEvent.participantsLimit,
+      });
+      if (!updated) {
+        throw new Error("Failed to update event");
       }
-
       toast.success(`Event Updated!`);
-
-      console.log("Event updated successfully.");
       setDialogOpen(false);
       fetchData();
     } catch (error) {
-      console.error("Error updating user:", error);
+      console.error("Error updating event:", error);
       toast.error(`Error: ${error}`);
     }
   }
 
-  async function handleDeleteEvent(eventName: any) {
+  function handleDeleteEvent(eventName: any) {
     if (!selectedEvent) return;
-
     try {
-      const response = await fetch(
-        `http://localhost:5050/api/events/delete/${eventName}`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        }
-      );
-
-      if (response.ok) {
-        console.log("deleted event successfully");
+      const deleted = deleteEventLocal(eventName);
+      if (deleted) {
         toast.success("Event Deleted!");
         fetchData();
       } else {
-        const errorText = await response.json();
-        throw new Error(`Failed to delete event: ${errorText}`);
+        throw new Error("Failed to delete event");
       }
     } catch (error) {
-      console.error("Error during delete user:", error);
+      console.error("Error during delete event:", error);
+      toast.error(`Error: ${error}`);
     }
   }
 

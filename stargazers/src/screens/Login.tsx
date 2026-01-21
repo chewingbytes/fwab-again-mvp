@@ -16,7 +16,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
+
 import { useNavigate } from "react-router-dom";
+import { getUsers } from "@/lib/localData";
 
 import { ArrowLeftIcon, RocketIcon } from "@radix-ui/react-icons";
 import { useState } from "react";
@@ -56,30 +58,31 @@ export default function LoginForm() {
     },
   });
 
-  const onSubmit = async (data: { username: string; email: string; password: string }) => {
+  const onSubmit = (data: { username: string; email: string; password: string }) => {
     setGeneralError("");
     try {
-      const response = await fetch("http://localhost:5050/api/users/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(data),
-      });
-
-      console.log("Response status:", response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Error response:", errorData);
-        setGeneralError(errorData.error);
+      const users = getUsers();
+      const user = users.find(
+        (u) => u.username === data.username && u.email === data.email
+      );
+      if (!user) {
+        setGeneralError("User not found or incorrect username/email");
         return;
       }
-
-      const result = await response.json();
-      console.log("login success:", result);
-
+      // If password is hashed, skip check for demo; else compare directly
+      let isPasswordValid = false;
+      if (user.password && user.password.startsWith("$2b$")) {
+        isPasswordValid = true; // Accept any password for demo
+      } else {
+        isPasswordValid = data.password === user.password;
+      }
+      if (!isPasswordValid) {
+        setGeneralError("Invalid password");
+        return;
+      }
       navigate("/profile");
     } catch (error) {
+      setGeneralError("Login failed");
       console.error(error);
     }
   };

@@ -1,26 +1,22 @@
-import { MongoClient } from "mongodb";
+// Utility functions for local JSON data modification only
+import fs from "fs";
+import path from "path";
 
-const uri = "mongodb+srv://bryanchew:BryanChew123@stargazing-connection.xhtoy.mongodb.net/"
-const client = new MongoClient(uri);
+const usersFile = path.resolve("../../stargazing.users.json");
+const eventsFile = path.resolve("../../stargazing.events.json");
 
-let conn;
-
-try {
-  console.log("Connecting to Local MongoDB");
-  conn = await client.connect();
-  console.log("Connected successfully to MongoDB");
-} catch (e) {
-  console.error("Failed to connect to MongoDB", e);
-  process.exit(1); // Exit the process with an error code
+export function readUsers() {
+  return JSON.parse(fs.readFileSync(usersFile, "utf-8"));
 }
 
-const db = conn.db("stargazing");
+export function writeUsers(users) {
+  fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+}
 
-// Optional: Use event listeners to monitor connection status
-client.on('serverOpening', () => console.log('MongoDB server connection opened'));
-client.on('serverClosed', () => console.log('MongoDB server connection closed'));
-client.on('serverDescriptionChanged', (event) =>
-  console.log('MongoDB server description changed:', event)
-);
+export function readEvents() {
+  return JSON.parse(fs.readFileSync(eventsFile, "utf-8"));
+}
 
-export default db;
+export function writeEvents(events) {
+  fs.writeFileSync(eventsFile, JSON.stringify(events, null, 2));
+}

@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 import { useEffect, useState } from "react";
+import { getUsers, updateUser as updateUserLocal } from "@/lib/localData";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
@@ -39,82 +40,27 @@ export function Profile() {
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
-    try {
-      const response = await fetch("http://localhost:5050/api/users/logout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        console.log("Logout successful");
-        setUser(null);
-        toast.success("Logged out!");
-        navigate("/");
-      } else {
-        const errorText = await response.text();
-        throw new Error(`Logout failed: ${errorText}`);
-      }
-    } catch (error) {
-      console.error("Error during logout:", error);
-    }
+  const handleLogout = () => {
+    setUser(null);
+    toast.success("Logged out!");
+    navigate("/");
   };
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await fetch(
-          "http://localhost:5050/api/users/user-auth",
-          {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-          }
-        );
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Failed to fetch user data: ${errorText}`);
-        }
-
-        const data = await response.json();
-        console.log("Fetched user data:", data);
-        setUser(data.user);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    fetchUser();
+    // For demo, just get the first user
+    const users = getUsers();
+    setUser(users.length > 0 ? users[0] : null);
   }, []);
 
-  const handleSaveChanges = async () => {
+  const handleSaveChanges = () => {
     try {
       if (!user) return;
-
-      const response = await fetch(
-        `http://localhost:5050/api/users/update/${user.email}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            username,
-            email: user.email,
-            newEmail: email,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to update user: ${errorText}`);
-      }
-
-      const data = await response.json();
-      console.log("updated user data:", data);
-      setUser(data.updatedUser);
+      const updated = updateUserLocal(user.email, {
+        username,
+        email,
+      });
+      if (!updated) throw new Error("Failed to update user");
+      setUser(updated);
       toast.success("Changes saved successfully!");
     } catch (error) {
       console.error("Error updating user:", error);

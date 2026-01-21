@@ -1,4 +1,5 @@
-import getUser from "@/functions/get-user-auth";
+
+import { getEvents } from "@/lib/localData";
 
 import {
   Card,
@@ -35,15 +36,9 @@ const Home = () => {
   const [user, setUser] = useState<User | null>(null);
   const starsRef = useRef<HTMLDivElement>(null);
 
-  async function fetchData() {
+  function fetchData() {
     try {
-      const response = await fetch("http://localhost:5050/api/events");
-      if (!response.ok) {
-        const message = `An error has occurred: ${response.statusText}`;
-        console.error(message);
-        return;
-      }
-      const eventsData: Event[] = await response.json();
+      const eventsData: Event[] = getEvents();
       setEvents(eventsData);
     } catch (error) {
       console.error("Error fetching events:", error);
@@ -52,13 +47,8 @@ const Home = () => {
 
   useEffect(() => {
     fetchData();
-
-    const fetchUserData = async () => {
-      const userData = await getUser();
-      setUser(userData);
-    };
-
-    fetchUserData();
+    // For demo, no user auth, so just set user to null
+    setUser(null);
   }, []);
 
   useEffect(() => {
@@ -114,7 +104,7 @@ const Home = () => {
         <div className="text-center barrio text-6xl">Upcoming Events</div>
         <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {events.map((event) => (
-            <div key={event._id}>
+            <div key={typeof event._id === 'object' && event._id !== null && '$oid' in event._id ? event._id.$oid : String(event._id || event.eventName)}>
               <Card>
                 <CardHeader>
                   <CardTitle>{event.eventName}</CardTitle>

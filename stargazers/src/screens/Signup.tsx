@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +19,9 @@ import {
 import { Input } from "@/components/ui/input";
 
 import { ArrowLeftIcon, RocketIcon } from "@radix-ui/react-icons";
-import { useState } from "react"; 
+
+import { useState } from "react";
+import { getUsers, addUser as addUserLocal } from "@/lib/localData";
 
 // Zod schema for signup
 const formSchema = z
@@ -50,7 +52,7 @@ const formSchema = z
 
 export default function SignupForm() {
   const navigate = useNavigate();
-  const [generalError, setGeneralError] = useState(""); 
+  const [generalError, setGeneralError] = useState("");
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -62,33 +64,35 @@ export default function SignupForm() {
     },
   });
 
-  const onSubmit = async (data: {
+  const onSubmit = (data: {
     username: string;
     email: string;
     password: string;
     confirmPassword: string;
   }) => {
-    setGeneralError(""); 
+    setGeneralError("");
     try {
-      const response = await fetch("http://localhost:5050/api/users/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Error response:", errorData);
-        setGeneralError(errorData.error); 
+      const users = getUsers();
+      const existingUser = users.find(
+        (u) => u.username === data.username || u.email === data.email,
+      );
+      if (existingUser) {
+        setGeneralError(
+          existingUser.username === data.username
+            ? "Username is already taken."
+            : "Email is already registered.",
+        );
         return;
-      } 
+      }
 
-      const result = await response.json();
-      console.log("User signed up successfully:", result);
-
+      addUserLocal({
+        username: data.username,
+        email: data.email,
+        roles: "user",
+      });
       navigate("/");
-
     } catch (error) {
+      setGeneralError("Signup failed");
       console.error(error);
     }
   };
@@ -181,10 +185,7 @@ export default function SignupForm() {
             )}
           />
 
-          {generalError && (
-            <p className="text-red-500">{generalError}</p> 
-          )}
-
+          {generalError && <p className="text-red-500">{generalError}</p>}
 
           <Button className="rounded" type="submit">
             <RocketIcon />
@@ -193,10 +194,10 @@ export default function SignupForm() {
         </form>
       </Form>
       <a href="/">
-      <Button className="rounded mt-3">
-        <ArrowLeftIcon />
-        Back
-      </Button>
+        <Button className="rounded mt-3">
+          <ArrowLeftIcon />
+          Back
+        </Button>
       </a>
     </div>
   );

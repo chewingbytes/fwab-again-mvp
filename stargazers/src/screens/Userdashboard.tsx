@@ -8,7 +8,14 @@ import {
 
 import { toast } from "sonner";
 
+
 import { useState, useEffect } from "react";
+import {
+  getUsers,
+  addUser as addUserLocal,
+  updateUser as updateUserLocal,
+  deleteUser as deleteUserLocal,
+} from "@/lib/localData";
 
 import {
   Dialog,
@@ -42,16 +49,11 @@ export default function Userdashboard() {
     roles: "user",
   });
 
-  async function fetchData() {
+  function fetchData() {
     try {
-      const response = await fetch("http://localhost:5050/api/users");
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.statusText}`);
-      }
-
-      const userData = await response.json();
+      const userData = getUsers();
       setUsers(userData);
+      setError(null);
     } catch (err) {
       setError((err as Error).message);
       console.error("Error fetching users:", err);
@@ -60,146 +62,90 @@ export default function Userdashboard() {
     }
   }
 
-  async function handleAddUser() {
+  function handleAddUser() {
     if (
       !newUser.username.trim() ||
       !newUser.email.trim() ||
       !newUser.roles.trim()
     ) {
-      toast.error(
-        "All fields are required"
-      );
+      toast.error("All fields are required");
       return;
     }
     try {
-      const response = await fetch("http://localhost:5050/api/users/add-user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json"},
-        body: JSON.stringify({
-          username: newUser.username,
-          email: newUser.email,
-          roles: newUser.roles,
-        }),
+      addUserLocal({
+        username: newUser.username,
+        email: newUser.email,
+        roles: newUser.roles,
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to add user: ${errorText}`);
-      }
-
       toast.success("new user added");
       setAddDialogOpen(false);
-      setNewUser({ username: "", email: "", roles: "user"});
+      setNewUser({ username: "", email: "", roles: "user" });
       fetchData();
-    }
-    catch (error) {
+    } catch (error) {
       console.error("Error adding user:", error);
       toast.error(`error: ${error}`);
     }
   }
 
-  async function fetchUserRole() {
-    try {
-      const response = await fetch(
-        "http://localhost:5050/api/users/user-auth",
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to fetch user data: ${errorText}`);
-      }
-
-      const data = await response.json();
-      const userRole = data.user.roles;
-      setUserRole(userRole);
-      console.log("userRole:", userRole);
-
-      if (userRole === "admin") {
-        const editColumn = {
-          accessorKey: "edit",
-          header: "Actions",
-          cell: ({ row }: any) => (
-            <Button
-              className="rounded"
-              onClick={() => handleEditClick(row.original)}
-            >
-              Edit
-            </Button>
-          ),
-        };
-
-        setColumns([...baseColumns, editColumn]);
-      }
-    } catch (error) {
-      console.error(error);
+  function fetchUserRole() {
+    // For demo, just set admin if any user is admin
+    const userData = getUsers();
+    const admin = userData.find(u => u.roles === "admin");
+    const role = admin ? "admin" : "user";
+    setUserRole(role);
+    if (role === "admin") {
+      const editColumn = {
+        accessorKey: "edit",
+        header: "Actions",
+        cell: ({ row }: any) => (
+          <Button
+            className="rounded"
+            onClick={() => handleEditClick(row.original)}
+          >
+            Edit
+          </Button>
+        ),
+      };
+      setColumns([...baseColumns, editColumn]);
     }
   }
 
-  async function handleDelete(selectedEmail: any) {
+  function handleDelete(selectedEmail: any) {
     if (!selectedUser) return;
-
     try {
-      const response = await fetch(
-        `http://localhost:5050/api/users/delete/${selectedEmail}`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        }
-      );
-
-      if (response.ok) {
-        console.log("Delete user successful");
+      const deleted = deleteUserLocal(selectedEmail);
+      if (deleted) {
         toast.success(`User deleted!`);
         fetchData();
       } else {
-        const errorText = await response.json();
-        throw new Error(`Failed to delete user: ${errorText}`);
+        throw new Error("Failed to delete user");
       }
     } catch (error) {
       console.error("Error during delete user:", error);
+      toast.error(`Error: ${error}`);
     }
   }
 
-  async function handleSaveChanges(selectedEmail: any) {
+  function handleSaveChanges(selectedEmail: any) {
     if (!selectedUser) return;
     if (
       !selectedUser.username.trim() ||
       !selectedUser.email.trim() ||
       !selectedUser.roles.trim()
     ) {
-      toast.error(
-        "All fields are required"
-      );
+      toast.error("All fields are required");
       return;
     }
     try {
-      const response = await fetch(
-        `http://localhost:5050/api/users/update/${selectedEmail}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: selectedUser.username,
-            newEmail: selectedUser.email,
-            roles: selectedUser.roles,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to update user: ${errorText}`);
+      const updated = updateUserLocal(selectedEmail, {
+        username: selectedUser.username,
+        email: selectedUser.email,
+        roles: selectedUser.roles,
+      });
+      if (!updated) {
+        throw new Error("Failed to update user");
       }
-
       toast.success(`User Updated!`);
-
-      console.log("User updated successfully.");
       setDialogOpen(false);
       fetchData();
     } catch (error) {
