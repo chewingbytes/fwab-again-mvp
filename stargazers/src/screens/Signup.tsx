@@ -1,5 +1,3 @@
-"use client";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -20,10 +18,10 @@ import { Input } from "@/components/ui/input";
 
 import { ArrowLeftIcon, RocketIcon } from "@radix-ui/react-icons";
 
-import { useState } from "react";
-import { getUsers, addUser as addUserLocal } from "@/lib/localData";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
-// Zod schema for signup
 const formSchema = z
   .object({
     username: z.string().min(2, {
@@ -52,7 +50,15 @@ const formSchema = z
 
 export default function SignupForm() {
   const navigate = useNavigate();
-  const [generalError, setGeneralError] = useState("");
+  const { signup, isAuthenticated, loading } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+
+  // If already logged in, redirect away from signup
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      navigate("/profile");
+    }
+  }, [isAuthenticated, loading, navigate]);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -64,36 +70,25 @@ export default function SignupForm() {
     },
   });
 
-  const onSubmit = (data: {
+  const onSubmit = async (data: {
     username: string;
     email: string;
     password: string;
     confirmPassword: string;
   }) => {
-    setGeneralError("");
+    setIsLoading(true);
     try {
-      const users = getUsers();
-      const existingUser = users.find(
-        (u) => u.username === data.username || u.email === data.email,
-      );
-      if (existingUser) {
-        setGeneralError(
-          existingUser.username === data.username
-            ? "Username is already taken."
-            : "Email is already registered.",
-        );
-        return;
-      }
-
-      addUserLocal({
+      await signup({
         username: data.username,
         email: data.email,
-        roles: "user",
+        password: data.password,
       });
+      toast.success("Signup successful!");
       navigate("/");
     } catch (error) {
-      setGeneralError("Signup failed");
-      console.error(error);
+      toast.error((error as Error).message || "Signup failed");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -185,11 +180,9 @@ export default function SignupForm() {
             )}
           />
 
-          {generalError && <p className="text-red-500">{generalError}</p>}
-
-          <Button className="rounded" type="submit">
+          <Button className="rounded" type="submit" disabled={isLoading}>
             <RocketIcon />
-            Sign Up
+            {isLoading ? "Loading..." : "Sign Up"}
           </Button>
         </form>
       </Form>

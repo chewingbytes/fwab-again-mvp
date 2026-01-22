@@ -1,5 +1,3 @@
-"use client";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -16,74 +14,54 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-
 import { useNavigate } from "react-router-dom";
-import { getUsers } from "@/lib/localData";
-
+import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeftIcon, RocketIcon } from "@radix-ui/react-icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
-// Updated Zod schema for login with username
 const formSchema = z.object({
-  username: z
-    .string()
-    .min(3, { message: "Username must be at least 3 characters." })
-    .max(20, { message: "Username must not exceed 20 characters." })
-    .nonempty({ message: "Username is required." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z
     .string()
     .min(8, { message: "Password must be at least 8 characters." })
     .max(128, { message: "Password must not exceed 128 characters." })
-    .regex(/[A-Z]/, {
-      message: "Password must contain at least one uppercase letter.",
-    })
-    .regex(/[a-z]/, {
-      message: "Password must contain at least one lowercase letter.",
-    })
-    .regex(/[0-9]/, { message: "Password must contain at least one digit." })
     .nonempty({ message: "Password is required." }),
 });
 
 export default function LoginForm() {
   const navigate = useNavigate();
-  const [generalError, setGeneralError] = useState("");
+  const { login, isAuthenticated, loading } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+
+  // If already logged in, redirect away from login
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      navigate("/profile");
+    }
+  }, [isAuthenticated, loading, navigate]);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: "", 
       email: "",
       password: "",
     },
   });
 
-  const onSubmit = (data: { username: string; email: string; password: string }) => {
-    setGeneralError("");
+  const onSubmit = async (data: { email: string; password: string }) => {
+    setIsLoading(true);
     try {
-      const users = getUsers();
-      const user = users.find(
-        (u) => u.username === data.username && u.email === data.email
-      );
-      if (!user) {
-        setGeneralError("User not found or incorrect username/email");
-        return;
-      }
-      // If password is hashed, skip check for demo; else compare directly
-      let isPasswordValid = false;
-      if (user.password && user.password.startsWith("$2b$")) {
-        isPasswordValid = true; // Accept any password for demo
-      } else {
-        isPasswordValid = data.password === user.password;
-      }
-      if (!isPasswordValid) {
-        setGeneralError("Invalid password");
-        return;
-      }
+      await login({
+        email: data.email,
+        password: data.password,
+      });
+      toast.success("Login successful!");
       navigate("/profile");
     } catch (error) {
-      setGeneralError("Login failed");
-      console.error(error);
+      toast.error((error as Error).message || "Login failed");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -98,26 +76,6 @@ export default function LoginForm() {
         </div>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            {/* New username field */}
-            <FormField
-              control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Username</FormLabel>
-                  <FormControl>
-                    <Input
-                      className="rounded"
-                      type="text"
-                      placeholder="Your username"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <FormField
               control={form.control}
               name="email"
@@ -157,10 +115,8 @@ export default function LoginForm() {
               )}
             />
 
-            {generalError && <p className="text-red-500">{generalError}</p>}
-
-            <Button className="rounded" type="submit">
-              <RocketIcon /> Login
+            <Button className="rounded" type="submit" disabled={isLoading}>
+              <RocketIcon /> {isLoading ? "Loading..." : "Login"}
             </Button>
           </form>
         </Form>

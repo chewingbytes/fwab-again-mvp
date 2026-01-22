@@ -1,5 +1,5 @@
 
-import { getEvents } from "@/lib/localData";
+import { getEvents } from "@/lib/api";
 
 import {
   Card,
@@ -18,6 +18,7 @@ import "../App.css";
 
 interface Event {
   _id: string;
+  id: number;
   eventName: string;
   description: string;
   eventDate: string;
@@ -36,9 +37,9 @@ const Home = () => {
   const [user, setUser] = useState<User | null>(null);
   const starsRef = useRef<HTMLDivElement>(null);
 
-  function fetchData() {
+  async function fetchData() {
     try {
-      const eventsData: Event[] = getEvents();
+      const eventsData: Event[] = await getEvents();
       setEvents(eventsData);
     } catch (error) {
       console.error("Error fetching events:", error);
@@ -104,7 +105,7 @@ const Home = () => {
         <div className="text-center barrio text-6xl">Upcoming Events</div>
         <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {events.map((event) => (
-            <div key={typeof event._id === 'object' && event._id !== null && '$oid' in event._id ? event._id.$oid : String(event._id || event.eventName)}>
+            <div key={event.id || event.eventName}>
               <Card>
                 <CardHeader>
                   <CardTitle>{event.eventName}</CardTitle>

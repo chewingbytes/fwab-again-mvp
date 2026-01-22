@@ -1,5 +1,5 @@
 import { useLocation } from "react-router-dom";
-import { PersonIcon, UnderlineIcon, StackIcon, HomeIcon } from "@radix-ui/react-icons";
+import { PersonIcon, UnderlineIcon, StackIcon } from "@radix-ui/react-icons";
 import {
   Tooltip,
   TooltipContent,
@@ -58,7 +58,7 @@ export function Navbar() {
             <TooltipContent>Event dashboard</TooltipContent>
           </Tooltip>
 
-          <Tooltip>
+          {/* <Tooltip>
             <TooltipTrigger>
               <a
                 href="/"
@@ -70,7 +70,7 @@ export function Navbar() {
               </a>
             </TooltipTrigger>
             <TooltipContent>Event dashboard</TooltipContent>
-          </Tooltip>
+          </Tooltip> */}
         </div>
       </TooltipProvider>
     </>

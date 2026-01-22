@@ -8,14 +8,10 @@ import {
 
 import { toast } from "sonner";
 
-
 import { useState, useEffect } from "react";
-import {
-  getUsers,
-  addUser as addUserLocal,
-  updateUser as updateUserLocal,
-  deleteUser as deleteUserLocal,
-} from "@/lib/localData";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { getUsers, addUser, updateUser, deleteUser } from "@/lib/api";
 
 import {
   Dialog,
@@ -26,13 +22,52 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import { NewUser, Users, columns as baseColumns } from "@/components/columns";
 import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
+interface Users {
+  _id?: string;
+  username: string;
+  email: string;
+  roles: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface NewUser {
+  username: string;
+  email: string;
+  roles: string;
+}
+
+const baseColumns = [
+  {
+    accessorKey: "username",
+    header: "Username",
+  },
+  {
+    accessorKey: "email",
+    header: "Email",
+  },
+  {
+    accessorKey: "roles",
+    header: "Role",
+  },
+];
+
 export default function Userdashboard() {
+  const navigate = useNavigate();
+  const { isAdmin, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      toast.error("Please log in to view this page");
+    }
+  }, [isAuthenticated, navigate]);
+
   const [users, setUsers] = useState<Users[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,16 +77,40 @@ export default function Userdashboard() {
   const [originalEmail, setOriginalEmail] = useState<string | null>(null);
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
-  const [userRole, setUserRole] = useState<string>(""); // Define userRole in state
   const [newUser, setNewUser] = useState<NewUser>({
     username: "",
     email: "",
     roles: "user",
   });
 
-  function fetchData() {
+  // Create columns dynamically based on admin status
+  useEffect(() => {
+    if (isAdmin) {
+      const columnsWithActions = [
+        ...baseColumns,
+        {
+          accessorKey: "edit",
+          header: "Actions",
+          cell: ({ row }: any) => (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleEditClick(row.original)}
+            >
+              Edit
+            </Button>
+          ),
+        },
+      ];
+      setColumns(columnsWithActions as any);
+    } else {
+      setColumns(baseColumns as any);
+    }
+  }, [isAdmin]);
+
+  async function fetchData() {
     try {
-      const userData = getUsers();
+      const userData = await getUsers();
       setUsers(userData);
       setError(null);
     } catch (err) {
@@ -62,7 +121,16 @@ export default function Userdashboard() {
     }
   }
 
-  function handleAddUser() {
+  function handleEditClick(user: Users) {
+    setSelectedUser({
+      ...user,
+      roles: typeof user.roles === "string" ? user.roles : "",
+    });
+    setOriginalEmail(user.email);
+    setDialogOpen(true);
+  }
+
+  async function handleAddUser() {
     if (
       !newUser.username.trim() ||
       !newUser.email.trim() ||
@@ -72,7 +140,7 @@ export default function Userdashboard() {
       return;
     }
     try {
-      addUserLocal({
+      await addUser({
         username: newUser.username,
         email: newUser.email,
         roles: newUser.roles,
@@ -83,50 +151,23 @@ export default function Userdashboard() {
       fetchData();
     } catch (error) {
       console.error("Error adding user:", error);
-      toast.error(`error: ${error}`);
+      toast.error(`error: ${(error as Error).message}`);
     }
   }
 
-  function fetchUserRole() {
-    // For demo, just set admin if any user is admin
-    const userData = getUsers();
-    const admin = userData.find(u => u.roles === "admin");
-    const role = admin ? "admin" : "user";
-    setUserRole(role);
-    if (role === "admin") {
-      const editColumn = {
-        accessorKey: "edit",
-        header: "Actions",
-        cell: ({ row }: any) => (
-          <Button
-            className="rounded"
-            onClick={() => handleEditClick(row.original)}
-          >
-            Edit
-          </Button>
-        ),
-      };
-      setColumns([...baseColumns, editColumn]);
-    }
-  }
-
-  function handleDelete(selectedEmail: any) {
+  async function handleDelete(selectedEmail: any) {
     if (!selectedUser) return;
     try {
-      const deleted = deleteUserLocal(selectedEmail);
-      if (deleted) {
-        toast.success(`User deleted!`);
-        fetchData();
-      } else {
-        throw new Error("Failed to delete user");
-      }
+      await deleteUser(selectedEmail);
+      toast.success(`User deleted!`);
+      fetchData();
     } catch (error) {
       console.error("Error during delete user:", error);
-      toast.error(`Error: ${error}`);
+      toast.error(`Error: ${(error as Error).message}`);
     }
   }
 
-  function handleSaveChanges(selectedEmail: any) {
+  async function handleSaveChanges(selectedEmail: any) {
     if (!selectedUser) return;
     if (
       !selectedUser.username.trim() ||
@@ -137,49 +178,35 @@ export default function Userdashboard() {
       return;
     }
     try {
-      const updated = updateUserLocal(selectedEmail, {
+      await updateUser(selectedEmail, {
         username: selectedUser.username,
         email: selectedUser.email,
         roles: selectedUser.roles,
       });
-      if (!updated) {
-        throw new Error("Failed to update user");
-      }
       toast.success(`User Updated!`);
       setDialogOpen(false);
       fetchData();
     } catch (error) {
       console.error("Error updating user:", error);
-      toast.error(`Error: ${error}`);
+      toast.error(`Error: ${(error as Error).message}`);
     }
-  }
-
-  function handleEditClick(user: Users) {
-    setSelectedUser({
-      ...user,
-      roles: typeof user.roles === "string" ? user.roles : "",
-    });
-    console.log("selected user:", user);
-    setOriginalEmail(user.email);
-    setDialogOpen(true);
   }
 
   useEffect(() => {
     fetchData();
-    fetchUserRole();
   }, []);
 
   return (
     <>
       <Card>
         <div className="flex justify-between items-center">
-        <CardHeader>
-          <CardTitle>User Dashboard</CardTitle>
-          <CardDescription>
-            List of users retrieved from the API
-          </CardDescription>
-        </CardHeader>
-        {userRole === "admin" && (
+          <CardHeader>
+            <CardTitle>User Dashboard</CardTitle>
+            <CardDescription>
+              List of users retrieved from the API
+            </CardDescription>
+          </CardHeader>
+          {isAdmin && (
             <Button
               className="rounded mr-6"
               onClick={() => setAddDialogOpen(true)}
@@ -200,7 +227,8 @@ export default function Userdashboard() {
         </CardContent>
       </Card>
 
-      <Dialog open={isAddDialogOpen} onOpenChange={setAddDialogOpen}>
+      {isAdmin && (
+        <Dialog open={isAddDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Add New User</DialogTitle>
@@ -259,18 +287,16 @@ export default function Userdashboard() {
           </div>
           <DialogFooter>
             <div className="flex flex-col space-y-2">
-              <Button
-                className="rounded"
-                onClick={() => handleAddUser()}
-              >
+              <Button className="rounded" onClick={() => handleAddUser()}>
                 Add user
               </Button>
             </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      )}
 
-      {selectedUser && (
+      {isAdmin && selectedUser && (
         <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
@@ -288,8 +314,8 @@ export default function Userdashboard() {
                   id="name"
                   value={selectedUser.username}
                   onChange={(e) =>
-                    setSelectedUser((prev) =>
-                      prev ? { ...prev, username: e.target.value } : prev
+                    setSelectedUser((prev: Users | null) =>
+                      prev ? { ...prev, username: e.target.value } : prev,
                     )
                   }
                   className="col-span-3"
@@ -303,8 +329,8 @@ export default function Userdashboard() {
                   id="email"
                   value={selectedUser.email}
                   onChange={(e) =>
-                    setSelectedUser((prev) =>
-                      prev ? { ...prev, email: e.target.value } : prev
+                    setSelectedUser((prev: Users | null) =>
+                      prev ? { ...prev, email: e.target.value } : prev,
                     )
                   }
                   className="col-span-3"
@@ -320,8 +346,8 @@ export default function Userdashboard() {
                   onChange={(e) => {
                     const inputRole = e.target.value;
                     if (inputRole === "user" || inputRole === "admin") {
-                      setSelectedUser((prev) =>
-                        prev ? { ...prev, roles: inputRole } : prev
+                      setSelectedUser((prev: Users | null) =>
+                        prev ? { ...prev, roles: inputRole } : prev,
                       );
                     }
                   }}

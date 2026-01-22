@@ -22,45 +22,43 @@ import {
 import { Button } from "@/components/ui/button";
 
 import { useEffect, useState } from "react";
-import { getUsers, updateUser as updateUserLocal } from "@/lib/localData";
+import { updateUser } from "@/lib/api";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
-import { useNavigate } from "react-router-dom"; // Import useNavigate
-
-interface User {
-  username: string;
-  email: string;
-  roles: string;
-}
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function Profile() {
-  const [user, setUser] = useState<User | null>(null);
+  const { user, logout } = useAuth();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    setUser(null);
-    toast.success("Logged out!");
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Logged out!");
+      navigate("/");
+    } catch (error) {
+      toast.error("Failed to logout");
+    }
   };
 
   useEffect(() => {
-    // For demo, just get the first user
-    const users = getUsers();
-    setUser(users.length > 0 ? users[0] : null);
-  }, []);
+    if (user) {
+      setUsername(user.username);
+      setEmail(user.email);
+    }
+  }, [user]);
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
     try {
       if (!user) return;
-      const updated = updateUserLocal(user.email, {
+      await updateUser(user.email, {
         username,
         email,
       });
-      if (!updated) throw new Error("Failed to update user");
-      setUser(updated);
       toast.success("Changes saved successfully!");
     } catch (error) {
       console.error("Error updating user:", error);

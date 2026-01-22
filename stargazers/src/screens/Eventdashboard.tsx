@@ -7,16 +7,6 @@ import {
 } from "@/components/ui/card";
 
 import { Textarea } from "@/components/ui/textarea";
-
-import { toast } from "sonner";
-
-import { useState, useEffect } from "react";
-import {
-  getEvents,
-  addEvent as addEventLocal,
-  updateEvent as updateEventLocal,
-  deleteEvent as deleteEventLocal,
-} from "@/lib/localData";
 import {
   Dialog,
   DialogContent,
@@ -25,18 +15,64 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-import {
-  NewEvent,
-  Event,
-  columns as baseColumns,
-} from "@/components/eventColumns";
 import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
+import { toast } from "sonner";
+
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  getEvents,
+  addEvent,
+  updateEvent,
+  deleteEvent,
+} from "@/lib/api";
+
+interface Event {
+  _id?: string;
+  eventName: string;
+  eventDate: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  description: string;
+  participantsLimit: number;
+}
+
+interface NewEvent {
+  eventName: string;
+  eventDate: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  description: string;
+  participantsLimit: number;
+}
+
+const baseColumns = [
+  { accessorKey: "eventName", header: "Event Name" },
+  { accessorKey: "eventDate", header: "Date" },
+  { accessorKey: "location", header: "Location" },
+  { accessorKey: "startTime", header: "Start Time" },
+  { accessorKey: "endTime", header: "End Time" },
+];
+
 export default function EventsDashboard() {
+  const navigate = useNavigate();
+  const { isAdmin, isAuthenticated } = useAuth();
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      toast.error("Please log in to view this page");
+    }
+  }, [isAuthenticated, navigate]);
+
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +84,6 @@ export default function EventsDashboard() {
   );
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
-  const [userRole, setUserRole] = useState<string>(""); // Define userRole in state
   const [newEvent, setNewEvent] = useState<NewEvent>({
     eventName: "",
     eventDate: "",
@@ -59,9 +94,34 @@ export default function EventsDashboard() {
     participantsLimit: 0,
   });
 
-  function fetchData() {
+  // Create columns dynamically based on admin status
+  useEffect(() => {
+    if (isAdmin) {
+      const columnsWithActions = [
+        ...baseColumns,
+        {
+          accessorKey: "edit",
+          header: "Actions",
+          cell: ({ row }: any) => (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleEditClick(row.original)}
+            >
+              Edit
+            </Button>
+          ),
+        },
+      ];
+      setColumns(columnsWithActions as any);
+    } else {
+      setColumns(baseColumns as any);
+    }
+  }, [isAdmin]);
+
+  async function fetchData() {
     try {
-      const eventData = getEvents();
+      const eventData = await getEvents();
       setEvents(eventData);
       setError(null);
     } catch (err) {
@@ -76,34 +136,11 @@ export default function EventsDashboard() {
     setSelectedEvent({
       ...event,
     });
-    console.log("Edit button clicked for:", event);
     setOriginalEventName(event.eventName);
     setDialogOpen(true);
   }
 
-  function fetchUserRole() {
-    // For demo, just set admin if any event exists
-    const eventData = getEvents();
-    const role = eventData.length > 0 ? "admin" : "user";
-    setUserRole(role);
-    if (role === "admin") {
-      const editColumn = {
-        accessorKey: "edit",
-        header: "Actions",
-        cell: ({ row }: any) => (
-          <Button
-            className="rounded"
-            onClick={() => handleEditClick(row.original)}
-          >
-            Edit
-          </Button>
-        ),
-      };
-      setColumns([...baseColumns, editColumn]);
-    }
-  }
-
-  function handleAddEvent() {
+  async function handleAddEvent() {
     if (
       !newEvent.eventName.trim() ||
       !newEvent.eventDate.trim() ||
@@ -117,7 +154,7 @@ export default function EventsDashboard() {
       return;
     }
     try {
-      addEventLocal(newEvent);
+      await addEvent(newEvent);
       toast.success("New event added");
       setAddDialogOpen(false);
       setNewEvent({
@@ -132,11 +169,11 @@ export default function EventsDashboard() {
       fetchData();
     } catch (error) {
       console.error("Error adding event:", error);
-      toast.error(`Error: ${error}`);
+      toast.error(`Error: ${(error as Error).message}`);
     }
   }
 
-  function handleSaveChanges(eventName: any) {
+  async function handleSaveChanges(eventName: any) {
     if (!selectedEvent) return;
     if (
       !selectedEvent.eventName.trim() ||
@@ -151,7 +188,7 @@ export default function EventsDashboard() {
       return;
     }
     try {
-      const updated = updateEventLocal(eventName, {
+      await updateEvent(eventName, {
         eventName: selectedEvent.eventName,
         eventDate: selectedEvent.eventDate,
         startTime: selectedEvent.startTime,
@@ -160,36 +197,28 @@ export default function EventsDashboard() {
         description: selectedEvent.description,
         participantsLimit: selectedEvent.participantsLimit,
       });
-      if (!updated) {
-        throw new Error("Failed to update event");
-      }
       toast.success(`Event Updated!`);
       setDialogOpen(false);
       fetchData();
     } catch (error) {
       console.error("Error updating event:", error);
-      toast.error(`Error: ${error}`);
+      toast.error(`Error: ${(error as Error).message}`);
     }
   }
 
-  function handleDeleteEvent(eventName: any) {
+  async function handleDeleteEvent(eventName: any) {
     if (!selectedEvent) return;
     try {
-      const deleted = deleteEventLocal(eventName);
-      if (deleted) {
-        toast.success("Event Deleted!");
-        fetchData();
-      } else {
-        throw new Error("Failed to delete event");
-      }
+      await deleteEvent(eventName);
+      toast.success("Event Deleted!");
+      fetchData();
     } catch (error) {
       console.error("Error during delete event:", error);
-      toast.error(`Error: ${error}`);
+      toast.error(`Error: ${(error as Error).message}`);
     }
   }
 
   useEffect(() => {
-    fetchUserRole();
     fetchData();
   }, []);
 
@@ -203,7 +232,7 @@ export default function EventsDashboard() {
               List of events retrieved from the API
             </CardDescription>
           </CardHeader>
-          {userRole === "admin" && (
+          {isAdmin && (
             <Button
               className="rounded mr-6"
               onClick={() => setAddDialogOpen(true)}
@@ -223,7 +252,8 @@ export default function EventsDashboard() {
         </CardContent>
       </Card>
 
-      <Dialog open={isAddDialogOpen} onOpenChange={setAddDialogOpen}>
+      {isAdmin && (
+        <Dialog open={isAddDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Add New Event</DialogTitle>
@@ -361,8 +391,9 @@ export default function EventsDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      )}
 
-      {selectedEvent && (
+      {isAdmin && selectedEvent && (
         <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>

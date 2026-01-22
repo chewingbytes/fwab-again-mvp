@@ -1,64 +1,66 @@
-[{
-  "_id": {
-    "$oid": "6718b2415f8426837726e534"
+[
+  {
+    "_id": {
+      "$oid": "6718b2415f8426837726e534"
+    },
+    "id": 1,
+    "eventName": "something else",
+    "eventDate": "2024-10-30",
+    "startTime": "19:00",
+    "endTime": "22:00",
+    "location": "Science Park Rooftop Observatory",
+    "description": "Join us to explore the Orion Nebula with our high-power telescopes. A great opportunity to study nebula formation.",
+    "participantsLimit": 30
   },
-  "id": 1,
-  "eventName": "Orion Nebula Observation",
-  "eventDate": "2024-10-30",
-  "startTime": "19:00",
-  "endTime": "22:00",
-  "location": "Science Park Rooftop Observatory",
-  "description": "Join us to explore the Orion Nebula with our high-power telescopes. A great opportunity to study nebula formation.",
-  "participantsLimit": 30
-},
-{
-  "_id": {
-    "$oid": "6718b2415f8426837726e535"
+  {
+    "_id": {
+      "$oid": "6718b2415f8426837726e535"
+    },
+    "id": 2,
+    "eventName": "Lunar Eclipse Watch",
+    "eventDate": "2024-11-08",
+    "startTime": "21:00",
+    "endTime": "23:30",
+    "location": "Marina Barrage",
+    "description": "Experience the magic of the lunar eclipse and learn the science behind it. Snacks and drinks will be provided!",
+    "participantsLimit": 50
   },
-  "id": 2,
-  "eventName": "Lunar Eclipse Watch",
-  "eventDate": "2024-11-08",
-  "startTime": "21:00",
-  "endTime": "23:30",
-  "location": "Marina Barrage",
-  "description": "Experience the magic of the lunar eclipse and learn the science behind it. Snacks and drinks will be provided!",
-  "participantsLimit": 50
-},
-{
-  "_id": {
-    "$oid": "6718b2415f8426837726e536"
+  {
+    "_id": {
+      "$oid": "6718b2415f8426837726e536"
+    },
+    "id": 3,
+    "eventName": "Meteor Shower Night",
+    "eventDate": "2024-12-13",
+    "startTime": "23:00",
+    "endTime": "02:00",
+    "location": "East Coast Park",
+    "description": "Watch the Geminids meteor shower peak and enjoy an overnight stargazing session. Bring your own mats and sleeping bags.",
+    "participantsLimit": 40
   },
-  "id": 3,
-  "eventName": "Meteor Shower Night",
-  "eventDate": "2024-12-13",
-  "startTime": "23:00",
-  "endTime": "02:00",
-  "location": "East Coast Park",
-  "description": "Watch the Geminids meteor shower peak and enjoy an overnight stargazing session. Bring your own mats and sleeping bags.",
-  "participantsLimit": 40
-},
-{
-  "_id": {
-    "$oid": "6718b2415f8426837726e537"
+  {
+    "_id": {
+      "$oid": "6718b2415f8426837726e537"
+    },
+    "id": 4,
+    "eventName": "Planets and Moons Exploration",
+    "eventDate": "2025-01-10",
+    "startTime": "18:30",
+    "endTime": "21:30",
+    "location": "School Field Outskirts",
+    "description": "An interactive session observing Jupiter, Saturn, and their moons through telescopes. A must-see for planetary enthusiasts!",
+    "participantsLimit": 2555
   },
-  "id": 4,
-  "eventName": "Planets and Moons Exploration",
-  "eventDate": "2025-01-10",
-  "startTime": "18:30",
-  "endTime": "21:30",
-  "location": "School Field Outskirts",
-  "description": "An interactive session observing Jupiter, Saturn, and their moons through telescopes. A must-see for planetary enthusiasts!",
-  "participantsLimit": 2555
-},
-{
-  "_id": {
-    "$oid": "67a6eb74270e216d8124eb67"
-  },
-  "eventName": "Death Star",
-  "eventDate": "4222-02-24",
-  "startTime": "14:42",
-  "endTime": "14:42",
-  "location": "Alderaan",
-  "description": "boom",
-  "participantsLimit": 19
-}]
+  {
+    "_id": {
+      "$oid": "67a6eb74270e216d8124eb67"
+    },
+    "eventName": "Death Star",
+    "eventDate": "4222-02-24",
+    "startTime": "14:42",
+    "endTime": "14:42",
+    "location": "Alderaan",
+    "description": "boom",
+    "participantsLimit": 19
+  }
+]

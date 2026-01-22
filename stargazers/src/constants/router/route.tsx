@@ -3,8 +3,9 @@ import Login from "@/screens/Login";
 import Signup from "@/screens/Signup";
 import Userdashboard from "@/screens/Userdashboard";
 import Eventdashboard from "@/screens/Eventdashboard";
-import { Profile }from "@/screens/Profile";
+import { Profile } from "@/screens/Profile";
 import DashboardLayout from "@/layouts/DashboardLayout";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 type Route = {
   path: string;
@@ -27,25 +28,32 @@ export const ROUTES: Route[] = [
   {
     path: "/profile",
     element: (
-      <DashboardLayout>
-        <Profile />
-      </DashboardLayout>
+      <ProtectedRoute>
+        <DashboardLayout>
+          <Profile />
+        </DashboardLayout>
+      </ProtectedRoute>
     ),
   },
   {
     path: "/userdashboard",
     element: (
-      <DashboardLayout>
-        <Userdashboard />
-      </DashboardLayout>
+      <ProtectedRoute>
+        <DashboardLayout>
+          <Userdashboard />
+        </DashboardLayout>
+      </ProtectedRoute>
     ),
   },
   {
     path: "/eventdashboard",
     element: (
-      <DashboardLayout>
-        <Eventdashboard />
-      </DashboardLayout>
+      <ProtectedRoute>
+        <DashboardLayout>
+          <Eventdashboard />
+        </DashboardLayout>
+      </ProtectedRoute>
     ),
   },
 ];
+

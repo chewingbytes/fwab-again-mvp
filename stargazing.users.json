@@ -1,66 +1,57 @@
-[{
-  "_id": {
-    "$oid": "671fae65a3f61de23a78a03b"
+[
+  {
+    "_id": {
+      "$oid": "671fae65a3f61de23a78a03b"
+    },
+    "username": "love",
+    "email": "love@gmail.com",
+    "password": "$2b$10$iteXTx6fCwlVuo6aodXgl.7sG.nZplK1Bzr455x6W5aDD8GAhifBG",
+    "createdAt": "28/10/2024, 11:31:49 pm",
+    "updatedAt": "09/01/2025, 11:19:36 am",
+    "roles": "admin"
   },
-  "username": "love",
-  "email": "love@gmail.com",
-  "password": "$2b$10$iteXTx6fCwlVuo6aodXgl.7sG.nZplK1Bzr455x6W5aDD8GAhifBG",
-  "createdAt": "28/10/2024, 11:31:49 pm",
-  "updatedAt": "09/01/2025, 11:19:36 am",
-  "roles": "admin"
-},
-{
-  "_id": {
-    "$oid": "6732d10e4c885043ca931e59"
+  {
+    "_id": {
+      "$oid": "6732d10e4c885043ca931e59"
+    },
+    "username": "test12345",
+    "email": "test@gmail.com",
+    "password": "$2b$10$TDC1am7vCIQiQUZiJfmME.OoQWd17xroB8YpehQE828cmgLP44NUa",
+    "createdAt": "12/11/2024, 11:52:46 am",
+    "updatedAt": "15/01/2025, 4:27:08 pm",
+    "roles": "admin"
   },
-  "username": "test12345",
-  "email": "test@gmail.com",
-  "password": "$2b$10$TDC1am7vCIQiQUZiJfmME.OoQWd17xroB8YpehQE828cmgLP44NUa",
-  "createdAt": "12/11/2024, 11:52:46 am",
-  "updatedAt": "15/01/2025, 4:27:08 pm",
-  "roles": "admin"
-},
-{
-  "_id": {
-    "$oid": "677b85b15a855f2b4ed06353"
+  {
+    "_id": {
+      "$oid": "677b85b15a855f2b4ed06353"
+    },
+    "username": "addtest",
+    "email": "addtest@gmail.com",
+    "password": "defaultstargazersPassword",
+    "createdAt": "06/01/2025, 3:26:41 pm",
+    "updatedAt": "08/01/2025, 10:42:48 am",
+    "roles": "user"
   },
-  "username": "addtest",
-  "email": "addtest@gmail.com",
-  "password": "defaultstargazersPassword",
-  "createdAt": "06/01/2025, 3:26:41 pm",
-  "updatedAt": "08/01/2025, 10:42:48 am",
-  "roles": "user"
-},
-{
-  "_id": {
-    "$oid": "67a631639a91416577d772b4"
+  {
+    "_id": {
+      "$oid": "67a6e20f98e9f69d738ce8cd"
+    },
+    "username": "joentron",
+    "email": "joen@gmail.com",
+    "password": "defaultstargazersPassword",
+    "createdAt": "08/02/2025, 12:48:15 pm",
+    "updatedAt": "08/02/2025, 12:48:15 pm",
+    "roles": "user"
   },
-  "username": "remember",
-  "email": "remember@gmail.com",
-  "password": "$2b$10$MwcGNv7MKT8BZNLU7cYJ..aSSOsNNPAbIevlOCKnrE6RhD8Ox3MRu",
-  "createdAt": "08/02/2025, 12:14:27 am",
-  "updatedAt": "08/02/2025, 1:40:02 pm",
-  "roles": "user"
-},
-{
-  "_id": {
-    "$oid": "67a6e20f98e9f69d738ce8cd"
-  },
-  "username": "joentron",
-  "email": "joen@gmail.com",
-  "password": "defaultstargazersPassword",
-  "createdAt": "08/02/2025, 12:48:15 pm",
-  "updatedAt": "08/02/2025, 12:48:15 pm",
-  "roles": "user"
-},
-{
-  "_id": {
-    "$oid": "67a6efad8c7b5c6314e294ae"
-  },
-  "username": "lasttest1",
-  "email": "lasttest@gmail.com",
-  "password": "defaultstargazersPassword",
-  "createdAt": "08/02/2025, 1:46:21 pm",
-  "updatedAt": "08/02/2025, 1:46:50 pm",
-  "roles": "admin"
-}]
+  {
+    "_id": {
+      "$oid": "0jup5x4ao8wrmkowu4wp"
+    },
+    "username": "bryan12345",
+    "email": "bryanchewzy24@gmail.com",
+    "password": "$2b$10$xOcCrxlX6l190R1ZRAEDz.Y..K2FyG8TFjFVlk2r5hIsrwR7XP6Ee",
+    "createdAt": "22/01/2026, 11:46:38 am",
+    "updatedAt": "22/01/2026, 12:41:07 pm",
+    "roles": "admin"
+  }
+]
