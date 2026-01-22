@@ -83,7 +83,6 @@ export default function Userdashboard() {
     roles: "user",
   });
 
-  // Create columns dynamically based on admin status
   useEffect(() => {
     if (isAdmin) {
       const columnsWithActions = [
@@ -109,6 +108,10 @@ export default function Userdashboard() {
   }, [isAdmin]);
 
   async function fetchData() {
+    if (!isAdmin) {
+      setLoading(false);
+      return;
+    }
     try {
       const userData = await getUsers();
       setUsers(userData);
@@ -221,6 +224,10 @@ export default function Userdashboard() {
             <p className="text-center">Loading users...</p>
           ) : error ? (
             <p className="text-center text-red-500">Error: {error}</p>
+          ) : !isAdmin ? (
+            <p className="text-center text-muted-foreground">
+              Admin access required to view user data
+            </p>
           ) : (
             <DataTable columns={columns} data={users} />
           )}

@@ -34,7 +34,6 @@ export default function LoginForm() {
   const { login, isAuthenticated, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
-  // If already logged in, redirect away from login
   useEffect(() => {
     if (!loading && isAuthenticated) {
       navigate("/profile");

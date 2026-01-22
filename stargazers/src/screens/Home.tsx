@@ -48,7 +48,6 @@ const Home = () => {
 
   useEffect(() => {
     fetchData();
-    // For demo, no user auth, so just set user to null
     setUser(null);
   }, []);
 

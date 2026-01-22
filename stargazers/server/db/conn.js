@@ -1,4 +1,3 @@
-// Utility functions for local JSON data modification only
 import fs from "fs";
 import path from "path";
 

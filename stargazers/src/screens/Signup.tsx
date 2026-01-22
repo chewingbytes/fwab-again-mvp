@@ -53,7 +53,6 @@ export default function SignupForm() {
   const { signup, isAuthenticated, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
-  // If already logged in, redirect away from signup
   useEffect(() => {
     if (!loading && isAuthenticated) {
       navigate("/profile");

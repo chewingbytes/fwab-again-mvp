@@ -53,5 +53,16 @@
     "createdAt": "22/01/2026, 11:46:38 am",
     "updatedAt": "22/01/2026, 12:41:07 pm",
     "roles": "admin"
+  },
+  {
+    "_id": {
+      "$oid": "hc7xwjyl5lamkp4833c"
+    },
+    "username": "nigga123",
+    "email": "nigga@gmail.com",
+    "password": "$2b$10$2RmvmbbD/y8.92dAR4DRaeFt//cWBeCp8cK0lMU36w/LJc8JbPKNW",
+    "createdAt": "22/01/2026, 3:13:26 pm",
+    "updatedAt": "22/01/2026, 3:54:33 pm",
+    "roles": "user"
   }
 ]

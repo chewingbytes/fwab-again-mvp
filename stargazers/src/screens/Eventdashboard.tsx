@@ -65,7 +65,6 @@ export default function EventsDashboard() {
   const navigate = useNavigate();
   const { isAdmin, isAuthenticated } = useAuth();
 
-  // Redirect if not authenticated
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
@@ -94,7 +93,6 @@ export default function EventsDashboard() {
     participantsLimit: 0,
   });
 
-  // Create columns dynamically based on admin status
   useEffect(() => {
     if (isAdmin) {
       const columnsWithActions = [

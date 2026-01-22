@@ -1,4 +1,3 @@
-// src/types/global.d.ts
 import { ReactElement } from "react";
 
 

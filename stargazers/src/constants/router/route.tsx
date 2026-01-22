@@ -4,6 +4,7 @@ import Signup from "@/screens/Signup";
 import Userdashboard from "@/screens/Userdashboard";
 import Eventdashboard from "@/screens/Eventdashboard";
 import { Profile } from "@/screens/Profile";
+import NotFound from "@/screens/NotFound";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
@@ -54,6 +55,10 @@ export const ROUTES: Route[] = [
         </DashboardLayout>
       </ProtectedRoute>
     ),
+  },
+  {
+    path: "*",
+    element: <NotFound />,
   },
 ];
 

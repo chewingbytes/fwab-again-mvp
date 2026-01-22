@@ -1,19 +1,6 @@
 [
   {
     "_id": {
-      "$oid": "6718b2415f8426837726e534"
-    },
-    "id": 1,
-    "eventName": "something else",
-    "eventDate": "2024-10-30",
-    "startTime": "19:00",
-    "endTime": "22:00",
-    "location": "Science Park Rooftop Observatory",
-    "description": "Join us to explore the Orion Nebula with our high-power telescopes. A great opportunity to study nebula formation.",
-    "participantsLimit": 30
-  },
-  {
-    "_id": {
       "$oid": "6718b2415f8426837726e535"
     },
     "id": 2,

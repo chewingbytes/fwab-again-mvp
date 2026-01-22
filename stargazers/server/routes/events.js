@@ -9,10 +9,8 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
-// Path to JSON data file
 const eventsFilePath = path.join(__dirname, "../../../stargazing.events.json");
 
-// Helper function to read events from JSON file
 function readEvents() {
   try {
     const data = fs.readFileSync(eventsFilePath, "utf8");
@@ -23,7 +21,6 @@ function readEvents() {
   }
 }
 
-// Helper function to write events to JSON file
 function writeEvents(events) {
   try {
     fs.writeFileSync(eventsFilePath, JSON.stringify(events, null, 2), "utf8");
@@ -34,7 +31,6 @@ function writeEvents(events) {
   }
 }
 
-// GET all events (public)
 router.get("/", optionalAuth, (req, res) => {
   try {
     const events = readEvents();
@@ -44,7 +40,6 @@ router.get("/", optionalAuth, (req, res) => {
   }
 });
 
-// GET event by ID (public)
 router.get("/:id", optionalAuth, (req, res) => {
   try {
     const events = readEvents();
@@ -58,7 +53,6 @@ router.get("/:id", optionalAuth, (req, res) => {
   }
 });
 
-// GET event by name (public)
 router.get("/name/:eventName", optionalAuth, (req, res) => {
   try {
     const events = readEvents();
@@ -72,7 +66,6 @@ router.get("/name/:eventName", optionalAuth, (req, res) => {
   }
 });
 
-// POST create new event (admin only)
 router.post("/", verifyToken, requireRole("admin"), (req, res) => {
   try {
     const {
@@ -99,7 +92,6 @@ router.post("/", verifyToken, requireRole("admin"), (req, res) => {
 
     const events = readEvents();
 
-    // Check if event already exists
     const existingEvent = events.find((e) => e.eventName === eventName);
     if (existingEvent) {
       return res
@@ -107,11 +99,9 @@ router.post("/", verifyToken, requireRole("admin"), (req, res) => {
         .json({ error: "Event with this name already exists" });
     }
 
-    // Generate new ID
     const newId =
       events.length > 0 ? Math.max(...events.map((e) => e.id)) + 1 : 1;
 
-    // Create new event
     const newEvent = {
       _id: {
         $oid: Math.random().toString(36).substring(2) + Date.now().toString(36),
@@ -139,7 +129,6 @@ router.post("/", verifyToken, requireRole("admin"), (req, res) => {
   }
 });
 
-// PUT update event by event name (admin only)
 router.put("/:eventName", verifyToken, requireRole("admin"), (req, res) => {
   try {
     const { eventName: oldEventName } = req.params;
@@ -168,7 +157,6 @@ router.put("/:eventName", verifyToken, requireRole("admin"), (req, res) => {
       }
     }
 
-    // Update event fields
     if (eventName) events[eventIndex].eventName = eventName;
     if (eventDate) events[eventIndex].eventDate = eventDate;
     if (startTime) events[eventIndex].startTime = startTime;
@@ -189,7 +177,6 @@ router.put("/:eventName", verifyToken, requireRole("admin"), (req, res) => {
   }
 });
 
-// DELETE event by event name (admin only)
 router.delete("/:eventName", verifyToken, requireRole("admin"), (req, res) => {
   try {
     const { eventName } = req.params;
@@ -214,7 +201,6 @@ router.delete("/:eventName", verifyToken, requireRole("admin"), (req, res) => {
   }
 });
 
-// GET all events
 router.get("/", (req, res) => {
   try {
     const events = readEvents();
@@ -224,7 +210,6 @@ router.get("/", (req, res) => {
   }
 });
 
-// GET event by ID
 router.get("/:id", (req, res) => {
   try {
     const events = readEvents();
@@ -238,7 +223,6 @@ router.get("/:id", (req, res) => {
   }
 });
 
-// GET event by name
 router.get("/name/:eventName", (req, res) => {
   try {
     const events = readEvents();
@@ -252,7 +236,6 @@ router.get("/name/:eventName", (req, res) => {
   }
 });
 
-// POST create new event
 router.post("/", (req, res) => {
   try {
     const {
@@ -279,7 +262,6 @@ router.post("/", (req, res) => {
 
     const events = readEvents();
 
-    // Check if event already exists
     const existingEvent = events.find((e) => e.eventName === eventName);
     if (existingEvent) {
       return res
@@ -287,11 +269,9 @@ router.post("/", (req, res) => {
         .json({ error: "Event with this name already exists" });
     }
 
-    // Generate new ID
     const newId =
       events.length > 0 ? Math.max(...events.map((e) => e.id)) + 1 : 1;
 
-    // Create new event
     const newEvent = {
       _id: {
         $oid: Math.random().toString(36).substring(2) + Date.now().toString(36),
@@ -319,7 +299,6 @@ router.post("/", (req, res) => {
   }
 });
 
-// PUT update event by event name
 router.put("/:eventName", (req, res) => {
   try {
     const { eventName: oldEventName } = req.params;
@@ -340,7 +319,6 @@ router.put("/:eventName", (req, res) => {
       return res.status(404).json({ error: "Event not found" });
     }
 
-    // Check if new event name is taken by another event
     if (eventName && eventName !== oldEventName) {
       const nameTaken = events.find((e) => e.eventName === eventName);
       if (nameTaken) {
@@ -348,7 +326,6 @@ router.put("/:eventName", (req, res) => {
       }
     }
 
-    // Update event fields
     if (eventName) events[eventIndex].eventName = eventName;
     if (eventDate) events[eventIndex].eventDate = eventDate;
     if (startTime) events[eventIndex].startTime = startTime;
@@ -369,7 +346,6 @@ router.put("/:eventName", (req, res) => {
   }
 });
 
-// DELETE event by event name
 router.delete("/:eventName", (req, res) => {
   try {
     const { eventName } = req.params;

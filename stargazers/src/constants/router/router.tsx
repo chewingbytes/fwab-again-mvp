@@ -1,4 +1,3 @@
-// src/constants/router/router.ts
 import {
   createBrowserRouter,
   createRoutesFromElements,

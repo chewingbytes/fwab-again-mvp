@@ -1,52 +1,47 @@
-import express from 'express';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
-import { verifyToken, requireRole } from '../authmiddleware.js';
+import express from "express";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+import { verifyToken, requireRole } from "../authmiddleware.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
+dotenv.config({ path: path.join(__dirname, "..", "..", ".env") });
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_TOKEN || 'your-secret-key-change-this';
-const JWT_EXPIRY = '7d';
+const JWT_SECRET = process.env.JWT_TOKEN;
+const JWT_EXPIRY = "7d";
 
-// Path to JSON data file
-const usersFilePath = path.join(__dirname, '../../../stargazing.users.json');
+const usersFilePath = path.join(__dirname, "../../../stargazing.users.json");
 
-// Helper function to read users from JSON file
 function readUsers() {
   try {
-    const data = fs.readFileSync(usersFilePath, 'utf8');
+    const data = fs.readFileSync(usersFilePath, "utf8");
     return JSON.parse(data);
   } catch (error) {
-    console.error('Error reading users file:', error);
+    console.error("Error reading users file:", error);
     return [];
   }
 }
 
-// Helper function to write users to JSON file
 function writeUsers(users) {
   try {
-    fs.writeFileSync(usersFilePath, JSON.stringify(users, null, 2), 'utf8');
+    fs.writeFileSync(usersFilePath, JSON.stringify(users, null, 2), "utf8");
     return true;
   } catch (error) {
-    console.error('Error writing users file:', error);
+    console.error("Error writing users file:", error);
     return false;
   }
 }
 
-// Helper function to format date
 const formatDate = () => {
-  return new Date().toLocaleString('en-SG', { timeZone: 'Asia/Singapore' });
+  return new Date().toLocaleString("en-SG", { timeZone: "Asia/Singapore" });
 };
 
-// Helper function to generate JWT token
 function generateToken(user) {
   return jwt.sign(
     {
@@ -56,254 +51,252 @@ function generateToken(user) {
       roles: user.roles,
     },
     JWT_SECRET,
-    { expiresIn: JWT_EXPIRY }
+    { expiresIn: JWT_EXPIRY },
   );
 }
 
-// Helper function to return user without password
 function userWithoutPassword(user) {
   const { password, ...userData } = user;
   return userData;
 }
 
-// GET all users (admin only)
-router.get('/', verifyToken, requireRole('admin'), (req, res) => {
+router.get("/", verifyToken, requireRole("admin"), (req, res) => {
   try {
     const users = readUsers();
     const usersWithoutPasswords = users.map(userWithoutPassword);
     res.json(usersWithoutPasswords);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch users' });
+    res.status(500).json({ error: "Failed to fetch users" });
   }
 });
 
-// GET current authenticated user
-router.get('/me', verifyToken, (req, res) => {
+router.get("/me", verifyToken, (req, res) => {
   try {
     const users = readUsers();
-    const user = users.find(u => u.email === req.user.email);
-    
+    const user = users.find((u) => u.email === req.user.email);
+
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
-    
+
     res.json({ user: userWithoutPassword(user) });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch user' });
+    res.status(500).json({ error: "Failed to fetch user" });
   }
 });
 
-// GET user by email (admin only)
-router.get('/:email', verifyToken, requireRole('admin'), (req, res) => {
+router.get("/:email", verifyToken, requireRole("admin"), (req, res) => {
   try {
     const users = readUsers();
-    const user = users.find(u => u.email === req.params.email);
+    const user = users.find((u) => u.email === req.params.email);
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
     res.json(userWithoutPassword(user));
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch user' });
+    res.status(500).json({ error: "Failed to fetch user" });
   }
 });
 
-// POST signup
-router.post('/auth/signup', async (req, res) => {
+router.post("/auth/signup", async (req, res) => {
   try {
     const { username, email, password } = req.body;
-    
+
     if (!username || !email || !password) {
-      return res.status(400).json({ error: 'Username, email, and password are required' });
+      return res
+        .status(400)
+        .json({ error: "Username, email, and password are required" });
     }
 
     const users = readUsers();
-    
-    // Check if user already exists
-    const existingUser = users.find(u => u.email === email || u.username === username);
+
+    const existingUser = users.find(
+      (u) => u.email === email || u.username === username,
+    );
     if (existingUser) {
-      return res.status(400).json({ 
-        error: existingUser.email === email ? 'Email already exists' : 'Username already exists' 
+      return res.status(400).json({
+        error:
+          existingUser.email === email
+            ? "Email already exists"
+            : "Username already exists",
       });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
     const newUser = {
-      _id: { $oid: Math.random().toString(36).substring(2) + Date.now().toString(36) },
+      _id: {
+        $oid: Math.random().toString(36).substring(2) + Date.now().toString(36),
+      },
       username,
       email,
       password: hashedPassword,
       createdAt: formatDate(),
       updatedAt: formatDate(),
-      roles: 'user'
+      roles: "user",
     };
 
     users.push(newUser);
-    
+
     if (writeUsers(users)) {
-      // Generate JWT token
       const token = generateToken(newUser);
-      
-      // Set cookie
-      res.cookie('token', token, {
+
+      res.cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
-      res.status(201).json({ 
-        message: 'Signup successful',
-        user: userWithoutPassword(newUser) 
+      res.status(201).json({
+        message: "Signup successful",
+        user: userWithoutPassword(newUser),
       });
     } else {
-      res.status(500).json({ error: 'Failed to save user' });
+      res.status(500).json({ error: "Failed to save user" });
     }
   } catch (error) {
-    console.error('Error creating user:', error);
-    res.status(500).json({ error: 'Failed to create user' });
+    console.error("Error creating user:", error);
+    res.status(500).json({ error: "Failed to create user" });
   }
 });
 
-// POST login
-router.post('/auth/login', async (req, res) => {
+router.post("/auth/login", async (req, res) => {
   try {
     const { username, email, password } = req.body;
-    
+
     if ((!username && !email) || !password) {
-      return res.status(400).json({ error: 'Username/email and password are required' });
+      return res
+        .status(400)
+        .json({ error: "Username/email and password are required" });
     }
 
     const users = readUsers();
-    const user = users.find(u => 
-      (username && u.username === username) || (email && u.email === email)
+    const user = users.find(
+      (u) =>
+        (username && u.username === username) || (email && u.email === email),
     );
 
     if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    // Verify password
     let isPasswordValid = false;
-    if (user.password.startsWith('$2b$')) {
+    if (user.password.startsWith("$2b$")) {
       isPasswordValid = await bcrypt.compare(password, user.password);
     } else {
       isPasswordValid = password === user.password;
     }
 
     if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    // Generate JWT token
     const token = generateToken(user);
-    
-    // Set cookie
-    res.cookie('token', token, {
+
+    res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, 
     });
 
-    res.json({ 
-      message: 'Login successful',
-      user: userWithoutPassword(user) 
+    res.json({
+      message: "Login successful",
+      user: userWithoutPassword(user),
     });
   } catch (error) {
-    console.error('Error during login:', error);
-    res.status(500).json({ error: 'Login failed' });
+    console.error("Error during login:", error);
+    res.status(500).json({ error: "Login failed" });
   }
 });
 
-// POST logout
-router.post('/auth/logout', (req, res) => {
-  res.clearCookie('token');
-  res.json({ message: 'Logout successful' });
+router.post("/auth/logout", (req, res) => {
+  res.clearCookie("token");
+  res.json({ message: "Logout successful" });
 });
 
-// POST create new user (admin only)
-router.post('/', verifyToken, requireRole('admin'), async (req, res) => {
+router.post("/", verifyToken, requireRole("admin"), async (req, res) => {
   try {
     const { username, email, password, roles } = req.body;
-    
+
     if (!username || !email) {
-      return res.status(400).json({ error: 'Username and email are required' });
+      return res.status(400).json({ error: "Username and email are required" });
     }
 
     const users = readUsers();
-    
-    // Check if user already exists
-    const existingUser = users.find(u => u.email === email || u.username === username);
+
+    const existingUser = users.find(
+      (u) => u.email === email || u.username === username,
+    );
     if (existingUser) {
-      return res.status(400).json({ 
-        error: existingUser.email === email ? 'Email already exists' : 'Username already exists' 
+      return res.status(400).json({
+        error:
+          existingUser.email === email
+            ? "Email already exists"
+            : "Username already exists",
       });
     }
 
-    // Hash password if provided
-    let hashedPassword = password || 'defaultstargazersPassword';
-    if (password && !password.startsWith('$2b$')) {
+    let hashedPassword = password || "defaultstargazersPassword";
+    if (password && !password.startsWith("$2b$")) {
       hashedPassword = await bcrypt.hash(password, 10);
     }
 
-    // Create new user
     const newUser = {
-      _id: { $oid: Math.random().toString(36).substring(2) + Date.now().toString(36) },
+      _id: {
+        $oid: Math.random().toString(36).substring(2) + Date.now().toString(36),
+      },
       username,
       email,
       password: hashedPassword,
       createdAt: formatDate(),
       updatedAt: formatDate(),
-      roles: roles || 'user'
+      roles: roles || "user",
     };
 
     users.push(newUser);
-    
+
     if (writeUsers(users)) {
       res.status(201).json(userWithoutPassword(newUser));
     } else {
-      res.status(500).json({ error: 'Failed to save user' });
+      res.status(500).json({ error: "Failed to save user" });
     }
   } catch (error) {
-    console.error('Error creating user:', error);
-    res.status(500).json({ error: 'Failed to create user' });
+    console.error("Error creating user:", error);
+    res.status(500).json({ error: "Failed to create user" });
   }
 });
 
-// PUT update user by email
-router.put('/:email', verifyToken, async (req, res) => {
+router.put("/:email", verifyToken, async (req, res) => {
   try {
     const { email: oldEmail } = req.params;
     const { username, email: newEmail, password, roles } = req.body;
-    
-    // Users can only update their own profile, admins can update anyone
-    if (req.user.roles !== 'admin' && req.user.email !== oldEmail) {
-      return res.status(403).json({ error: 'Forbidden: Cannot update another user' });
-    }
-    
-    const users = readUsers();
-    const userIndex = users.findIndex(u => u.email === oldEmail);
-    
-    if (userIndex === -1) {
-      return res.status(404).json({ error: 'User not found' });
+
+    if (req.user.roles !== "admin" && req.user.email !== oldEmail) {
+      return res
+        .status(403)
+        .json({ error: "Forbidden: Cannot update another user" });
     }
 
-    // Check if new email is taken by another user
+    const users = readUsers();
+    const userIndex = users.findIndex((u) => u.email === oldEmail);
+
+    if (userIndex === -1) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
     if (newEmail && newEmail !== oldEmail) {
-      const emailTaken = users.find(u => u.email === newEmail);
+      const emailTaken = users.find((u) => u.email === newEmail);
       if (emailTaken) {
-        return res.status(400).json({ error: 'Email already exists' });
+        return res.status(400).json({ error: "Email already exists" });
       }
     }
 
-    // Update user fields
     if (username) users[userIndex].username = username;
     if (newEmail) users[userIndex].email = newEmail;
-    if (roles && req.user.roles === 'admin') users[userIndex].roles = roles; // Only admin can change roles
-    if (password && !password.startsWith('$2b$')) {
+    if (roles && req.user.roles === "admin") users[userIndex].roles = roles; 
+    if (password && !password.startsWith("$2b$")) {
       users[userIndex].password = await bcrypt.hash(password, 10);
     }
     users[userIndex].updatedAt = formatDate();
@@ -311,36 +304,38 @@ router.put('/:email', verifyToken, async (req, res) => {
     if (writeUsers(users)) {
       res.json(userWithoutPassword(users[userIndex]));
     } else {
-      res.status(500).json({ error: 'Failed to update user' });
+      res.status(500).json({ error: "Failed to update user" });
     }
   } catch (error) {
-    console.error('Error updating user:', error);
-    res.status(500).json({ error: 'Failed to update user' });
+    console.error("Error updating user:", error);
+    res.status(500).json({ error: "Failed to update user" });
   }
 });
 
-// DELETE user by email (admin only)
-router.delete('/:email', verifyToken, requireRole('admin'), (req, res) => {
+router.delete("/:email", verifyToken, requireRole("admin"), (req, res) => {
   try {
     const { email } = req.params;
     const users = readUsers();
-    const userIndex = users.findIndex(u => u.email === email);
-    
+    const userIndex = users.findIndex((u) => u.email === email);
+
     if (userIndex === -1) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
 
     const deletedUser = users[userIndex];
     users.splice(userIndex, 1);
-    
+
     if (writeUsers(users)) {
-      res.json({ message: 'User deleted successfully', user: userWithoutPassword(deletedUser) });
+      res.json({
+        message: "User deleted successfully",
+        user: userWithoutPassword(deletedUser),
+      });
     } else {
-      res.status(500).json({ error: 'Failed to delete user' });
+      res.status(500).json({ error: "Failed to delete user" });
     }
   } catch (error) {
-    console.error('Error deleting user:', error);
-    res.status(500).json({ error: 'Failed to delete user' });
+    console.error("Error deleting user:", error);
+    res.status(500).json({ error: "Failed to delete user" });
   }
 });
 
